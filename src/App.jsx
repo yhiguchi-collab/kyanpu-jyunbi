@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import EntryForm from './components/EntryForm'
 import SummaryView from './components/SummaryView'
 import ShoppingList from './components/ShoppingList'
-import { fetchEntries, saveEntry, isConfigured } from './utils/api'
+import { getEntries, saveEntry } from './utils/storage'
 import './App.css'
 
 const TABS = [
@@ -13,41 +13,12 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('entry')
-  const [entries, setEntries] = useState([])
+  const [entries, setEntries] = useState(() => getEntries())
 
-  const refresh = useCallback(() => {
-    fetchEntries().then(data => {
-      if (Array.isArray(data)) setEntries(data)
-    })
+  const handleSave = useCallback((entry) => {
+    saveEntry(entry)
+    setEntries(getEntries())
   }, [])
-
-  useEffect(() => {
-    if (!isConfigured) return
-    refresh()
-    const id = setInterval(refresh, 10000)
-    return () => clearInterval(id)
-  }, [refresh])
-
-  const handleSave = async (entry) => {
-    await saveEntry(entry)
-    // GAS の処理完了を待ってから再取得
-    setTimeout(refresh, 2000)
-  }
-
-  if (!isConfigured) {
-    return (
-      <div className="app">
-        <header className="app-header">
-          <h1>キャンプ準備</h1>
-          <p>2026年6月6日 7名</p>
-        </header>
-        <div className="setup-msg">
-          <p className="setup-title">GAS の設定が必要です</p>
-          <p>CLAUDE.md の「GAS セットアップ」手順を確認してください。</p>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="app">

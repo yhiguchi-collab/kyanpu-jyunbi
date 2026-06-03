@@ -5,8 +5,7 @@
 ## 技術スタック
 
 - React 18 + Vite
-- Google Apps Script（データ保存・取得 API）
-- Google スプレッドシート（データベース）
+- localStorage（データ保存）
 - Chart.js（円グラフ）
 - GitHub Pages（ホスティング）
 
@@ -14,59 +13,30 @@
 
 ```
 kyanpu-jyunbi/
-├── gas/
-│   └── Code.gs               # GAS スクリプト（Google Apps Script にコピーして使う）
 ├── src/
-│   ├── App.jsx               # ルートコンポーネント（状態管理・ポーリング）
+│   ├── App.jsx               # ルートコンポーネント（状態管理）
 │   ├── components/
 │   │   ├── EntryForm.jsx     # 入力フォーム
 │   │   ├── SummaryView.jsx   # 集計・円グラフ
 │   │   └── ShoppingList.jsx  # 買い物チェックリスト
 │   └── utils/
-│       ├── api.js            # GAS API 呼び出し
-│       └── storage.js        # localStorage（チェック状態のみ）
-├── .env.local                # GAS URL 設定（要作成・git管理外）
-└── .env.local.example        # 設定ファイルのテンプレート
+│       └── storage.js        # localStorage 操作
+└── index.html
 ```
 
-## GAS セットアップ
+## 動作確認
 
-アプリを複数デバイスで使うには GAS の設定が必要です（所要時間 約5分）。
-
-### 1. Google スプレッドシートを作成
-
-1. Google ドライブで新しいスプレッドシートを作成
-2. シート名は何でも OK（GAS がシートを自動作成します）
-
-### 2. GAS スクリプトを作成
-
-1. スプレッドシートのメニュー「拡張機能」→「Apps Script」を開く
-2. エディタに `gas/Code.gs` の内容をすべてコピー＆ペースト
-3. 上部の「プロジェクトを保存」(Ctrl+S) をクリック
-
-### 3. ウェブアプリとしてデプロイ
-
-1. 右上の「デプロイ」→「新しいデプロイ」
-2. 種類は「ウェブアプリ」を選択
-3. 設定を以下の通りにする：
-   - **次のユーザーとして実行**：自分（your email）
-   - **アクセスできるユーザー**：**全員**
-4. 「デプロイ」をクリック → Google アカウントで承認
-5. 表示される「ウェブアプリの URL」をコピー
-
-### 4. .env.local を作成
-
-プロジェクトフォルダに `.env.local` ファイルを作成：
-
-```
-VITE_GAS_URL=https://script.google.com/macros/s/コピーしたID/exec
+```bash
+npm run dev
 ```
 
-### 5. デプロイ
+## GitHub Pages へのデプロイ
 
 ```bash
 npm run deploy
 ```
+
+公開URL: https://yhiguchi-collab.github.io/kyanpu-jyunbi/
 
 ## コーディング規約
 
@@ -100,19 +70,4 @@ npm run deploy
 
 ### 注意事項
 
-- `.env.local`（GAS URL）は絶対にコミットしない（`.gitignore` で除外済み）
 - `node_modules/` や OS 生成ファイル（`desktop.ini` 等）はコミットしない
-
-## 開発サーバー起動
-
-```bash
-npm run dev
-```
-
-## GitHub Pages へのデプロイ
-
-```bash
-npm run deploy
-```
-
-公開URL: https://yhiguchi-collab.github.io/kyanpu-jyunbi/
