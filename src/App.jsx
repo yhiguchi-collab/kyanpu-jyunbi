@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import EntryForm from './components/EntryForm'
 import SummaryView from './components/SummaryView'
 import ShoppingList from './components/ShoppingList'
-import { getEntries, saveEntry } from './utils/storage'
+import { subscribeEntries, saveEntry, isConfigured } from './utils/db'
 import './App.css'
 
 const TABS = [
@@ -13,12 +13,31 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('entry')
-  const [entries, setEntries] = useState(() => getEntries())
+  const [entries, setEntries] = useState([])
 
-  const handleSave = useCallback((entry) => {
-    saveEntry(entry)
-    setEntries(getEntries())
+  useEffect(() => {
+    const unsubscribe = subscribeEntries(setEntries)
+    return () => unsubscribe()
   }, [])
+
+  const handleSave = async (entry) => {
+    await saveEntry(entry)
+  }
+
+  if (!isConfigured) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>キャンプ準備</h1>
+          <p>2026年6月6日 7名</p>
+        </header>
+        <div className="setup-msg">
+          <p className="setup-title">Firebase の設定が必要です</p>
+          <p>CLAUDE.md の「Firebase セットアップ」手順を確認してください。</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="app">
