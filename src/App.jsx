@@ -1,8 +1,8 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import EntryForm from './components/EntryForm'
 import SummaryView from './components/SummaryView'
 import ShoppingList from './components/ShoppingList'
-import { getEntries, saveEntry } from './utils/storage'
+import { getEntries, saveEntry, deleteEntry } from './utils/storage'
 import './App.css'
 
 const TABS = [
@@ -14,11 +14,35 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState('entry')
   const [entries, setEntries] = useState(() => getEntries())
+  const [editingEntry, setEditingEntry] = useState(null)
 
-  const handleSave = useCallback((entry) => {
+  const handleSave = (entry) => {
+    const wasEditing = !!editingEntry
     saveEntry(entry)
     setEntries(getEntries())
-  }, [])
+    setEditingEntry(null)
+    if (wasEditing) setTab('summary')
+  }
+
+  const handleDelete = (name) => {
+    if (!window.confirm(`「${name}」の回答を削除しますか？`)) return
+    deleteEntry(name)
+    setEntries(getEntries())
+  }
+
+  const handleEdit = (entry) => {
+    setEditingEntry(entry)
+    setTab('entry')
+  }
+
+  const handleCancelEdit = () => {
+    setEditingEntry(null)
+  }
+
+  const handleTabChange = (id) => {
+    setTab(id)
+    if (id !== 'entry') setEditingEntry(null)
+  }
 
   return (
     <div className="app">
@@ -32,7 +56,7 @@ export default function App() {
           <button
             key={t.id}
             className={tab === t.id ? 'active' : ''}
-            onClick={() => setTab(t.id)}
+            onClick={() => handleTabChange(t.id)}
           >
             {t.label}
           </button>
@@ -40,8 +64,21 @@ export default function App() {
       </nav>
 
       <main className="tab-content">
-        {tab === 'entry' && <EntryForm onSave={handleSave} />}
-        {tab === 'summary' && <SummaryView entries={entries} />}
+        {tab === 'entry' && (
+          <EntryForm
+            key={editingEntry?.name ?? 'new'}
+            onSave={handleSave}
+            initialEntry={editingEntry}
+            onCancel={editingEntry ? handleCancelEdit : null}
+          />
+        )}
+        {tab === 'summary' && (
+          <SummaryView
+            entries={entries}
+            onDelete={handleDelete}
+            onEdit={handleEdit}
+          />
+        )}
         {tab === 'shopping' && <ShoppingList entries={entries} />}
       </main>
     </div>

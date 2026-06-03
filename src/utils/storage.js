@@ -31,3 +31,8 @@ export function getCheckedItems() {
 export function saveCheckedItems(items) {
   localStorage.setItem(CHECKED_KEY, JSON.stringify(items))
 }
+
+export function deleteEntry(name) {
+  const entries = getEntries().filter(e => e.name !== name)
+  localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
+}

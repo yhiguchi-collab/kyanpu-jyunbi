@@ -1,12 +1,14 @@
 import { useState } from 'react'
 
-export default function EntryForm({ onSave }) {
-  const [name, setName] = useState('')
+export default function EntryForm({ onSave, initialEntry = null, onCancel = null }) {
+  const [name, setName] = useState(initialEntry?.name ?? '')
   const [foodInput, setFoodInput] = useState('')
-  const [foods, setFoods] = useState([])
+  const [foods, setFoods] = useState(initialEntry?.foods ?? [])
   const [drinkInput, setDrinkInput] = useState('')
-  const [drinks, setDrinks] = useState([])
+  const [drinks, setDrinks] = useState(initialEntry?.drinks ?? [])
   const [submitted, setSubmitted] = useState(false)
+
+  const isEditing = !!initialEntry
 
   const addItem = (input, list, setList, setInput) => {
     const val = input.trim()
@@ -23,7 +25,6 @@ export default function EntryForm({ onSave }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    // 追加ボタンを押さずに送信した場合も入力中の値を含める
     const finalFoods = foodInput.trim() && !foods.includes(foodInput.trim())
       ? [...foods, foodInput.trim()]
       : foods
@@ -31,7 +32,7 @@ export default function EntryForm({ onSave }) {
       ? [...drinks, drinkInput.trim()]
       : drinks
     onSave({ name: name.trim(), foods: finalFoods, drinks: finalDrinks })
-    setSubmitted(true)
+    if (!isEditing) setSubmitted(true)
   }
 
   const handleReset = () => {
@@ -56,15 +57,21 @@ export default function EntryForm({ onSave }) {
 
   return (
     <form className="entry-form" onSubmit={handleSubmit}>
+      {isEditing && (
+        <p className="edit-label">回答を修正中：{name}</p>
+      )}
+
       <div className="form-field">
         <label htmlFor="name">お名前</label>
         <input
           id="name"
           type="text"
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={e => !isEditing && setName(e.target.value)}
           placeholder="名前を入力してください"
           required
+          readOnly={isEditing}
+          className={isEditing ? 'input-readonly' : ''}
         />
       </div>
 
@@ -134,7 +141,16 @@ export default function EntryForm({ onSave }) {
         </ul>
       </div>
 
-      <button type="submit" className="btn-submit">回答を送信</button>
+      <div className="form-actions">
+        {onCancel && (
+          <button type="button" className="btn-cancel" onClick={onCancel}>
+            キャンセル
+          </button>
+        )}
+        <button type="submit" className="btn-submit">
+          {isEditing ? '修正を保存' : '回答を送信'}
+        </button>
+      </div>
     </form>
   )
 }

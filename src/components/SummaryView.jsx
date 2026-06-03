@@ -83,7 +83,7 @@ function PieChart({ title, counts }) {
   )
 }
 
-export default function SummaryView({ entries }) {
+export default function SummaryView({ entries, onDelete, onEdit }) {
   const foodCounts = aggregateCounts(entries, 'foods')
   const drinkCounts = aggregateCounts(entries, 'drinks')
 
@@ -105,6 +105,7 @@ export default function SummaryView({ entries }) {
                 <th>名前</th>
                 <th>食べたいもの</th>
                 <th>飲みたいもの</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -113,6 +114,10 @@ export default function SummaryView({ entries }) {
                   <td>{e.name}</td>
                   <td>{(e.foods || []).join('、')}</td>
                   <td>{(e.drinks || []).join('、')}</td>
+                  <td className="action-cell">
+                    <button className="btn-edit" onClick={() => onEdit(e)}>編集</button>
+                    <button className="btn-delete" onClick={() => onDelete(e.name)}>削除</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
