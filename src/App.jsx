@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import EntryForm from './components/EntryForm'
 import SummaryView from './components/SummaryView'
 import ShoppingList from './components/ShoppingList'
-import { getEntries, saveEntry, deleteEntry } from './utils/storage'
+import { fetchEntries, saveEntry, deleteEntry, isConfigured } from './utils/api'
 import './App.css'
 
 const TABS = [
@@ -13,21 +13,33 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('entry')
-  const [entries, setEntries] = useState(() => getEntries())
+  const [entries, setEntries] = useState([])
   const [editingEntry, setEditingEntry] = useState(null)
 
-  const handleSave = (entry) => {
+  const refresh = useCallback(() => {
+    fetchEntries().then(data => {
+      if (Array.isArray(data)) setEntries(data)
+    })
+  }, [])
+
+  useEffect(() => {
+    refresh()
+    const id = setInterval(refresh, 10000)
+    return () => clearInterval(id)
+  }, [refresh])
+
+  const handleSave = async (entry) => {
     const wasEditing = !!editingEntry
-    saveEntry(entry)
-    setEntries(getEntries())
+    await saveEntry(entry)
+    setTimeout(refresh, 1500)
     setEditingEntry(null)
     if (wasEditing) setTab('summary')
   }
 
-  const handleDelete = (name) => {
+  const handleDelete = async (name) => {
     if (!window.confirm(`「${name}」の回答を削除しますか？`)) return
-    deleteEntry(name)
-    setEntries(getEntries())
+    await deleteEntry(name)
+    setTimeout(refresh, 1500)
   }
 
   const handleEdit = (entry) => {
@@ -42,6 +54,21 @@ export default function App() {
   const handleTabChange = (id) => {
     setTab(id)
     if (id !== 'entry') setEditingEntry(null)
+  }
+
+  if (!isConfigured) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>キャンプ準備</h1>
+          <p>2026年6月6日 7名</p>
+        </header>
+        <div className="setup-msg">
+          <p className="setup-title">GAS の設定が必要です</p>
+          <p>CLAUDE.md の「GAS セットアップ」手順を確認してください。</p>
+        </div>
+      </div>
+    )
   }
 
   return (

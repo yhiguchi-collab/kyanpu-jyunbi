@@ -9,6 +9,11 @@ function doGet(e) {
       upsertEntry(entry)
       return respond({ ok: true })
     }
+    if (action === 'delete') {
+      const name = decodeURIComponent(e.parameter.name)
+      removeEntry(name)
+      return respond({ ok: true })
+    }
     return respond(listEntries())
   } catch (err) {
     return respond({ error: err.message })
@@ -29,6 +34,18 @@ function upsertEntry(entry) {
   }
 
   sheet.appendRow([entry.name, JSON.stringify(entry.foods), JSON.stringify(entry.drinks)])
+}
+
+function removeEntry(name) {
+  const sheet = getSheet()
+  const values = sheet.getDataRange().getValues()
+
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][0] === name) {
+      sheet.deleteRow(i + 1)
+      return
+    }
+  }
 }
 
 function listEntries() {
