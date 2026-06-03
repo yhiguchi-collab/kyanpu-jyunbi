@@ -1,7 +1,5 @@
-import { useState } from 'react'
 import { Pie } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-import { getEntries } from '../utils/storage'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -85,8 +83,7 @@ function PieChart({ title, counts }) {
   )
 }
 
-export default function SummaryView() {
-  const [entries, setEntries] = useState(() => getEntries())
+export default function SummaryView({ entries }) {
   const foodCounts = aggregateCounts(entries, 'foods')
   const drinkCounts = aggregateCounts(entries, 'drinks')
 
@@ -94,9 +91,6 @@ export default function SummaryView() {
     <div className="summary">
       <div className="summary-header">
         <p>{entries.length} / 7名 回答済み</p>
-        <button className="btn-refresh" onClick={() => setEntries(getEntries())}>
-          更新
-        </button>
       </div>
 
       <PieChart title="食べたいもの" counts={foodCounts} />

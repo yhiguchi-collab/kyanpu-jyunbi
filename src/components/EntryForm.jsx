@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { saveEntry } from '../utils/storage'
 
-export default function EntryForm() {
+export default function EntryForm({ onSave }) {
   const [name, setName] = useState('')
   const [foodInput, setFoodInput] = useState('')
   const [foods, setFoods] = useState([])
@@ -24,7 +23,7 @@ export default function EntryForm() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    saveEntry({ name: name.trim(), foods, drinks })
+    onSave({ name: name.trim(), foods, drinks })
     setSubmitted(true)
   }
 

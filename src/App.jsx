@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import EntryForm from './components/EntryForm'
 import SummaryView from './components/SummaryView'
 import ShoppingList from './components/ShoppingList'
+import { getEntries, saveEntry } from './utils/storage'
 import './App.css'
 
 const TABS = [
@@ -12,6 +13,12 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('entry')
+  const [entries, setEntries] = useState(() => getEntries())
+
+  const handleSave = useCallback((entry) => {
+    saveEntry(entry)
+    setEntries(getEntries())
+  }, [])
 
   return (
     <div className="app">
@@ -33,9 +40,9 @@ export default function App() {
       </nav>
 
       <main className="tab-content">
-        {tab === 'entry' && <EntryForm />}
-        {tab === 'summary' && <SummaryView />}
-        {tab === 'shopping' && <ShoppingList />}
+        {tab === 'entry' && <EntryForm onSave={handleSave} />}
+        {tab === 'summary' && <SummaryView entries={entries} />}
+        {tab === 'shopping' && <ShoppingList entries={entries} />}
       </main>
     </div>
   )

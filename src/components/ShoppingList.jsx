@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getEntries, getCheckedItems, saveCheckedItems } from '../utils/storage'
+import { getCheckedItems, saveCheckedItems } from '../utils/storage'
 
 function ItemSection({ title, items, checked, onToggle }) {
   return (
@@ -27,9 +27,8 @@ function ItemSection({ title, items, checked, onToggle }) {
   )
 }
 
-export default function ShoppingList() {
+export default function ShoppingList({ entries }) {
   const [checked, setChecked] = useState(() => getCheckedItems())
-  const entries = getEntries()
 
   const allFoods = [...new Set(entries.flatMap(e => e.foods || []))]
   const allDrinks = [...new Set(entries.flatMap(e => e.drinks || []))]
