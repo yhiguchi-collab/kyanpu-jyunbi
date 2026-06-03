@@ -1,25 +1,29 @@
-const GAS_URL = import.meta.env.VITE_GAS_URL
+import { createClient } from '@supabase/supabase-js'
 
-export const isConfigured = !!GAS_URL
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+export const isConfigured = !!(supabaseUrl && supabaseKey)
+
+const supabase = isConfigured ? createClient(supabaseUrl, supabaseKey) : null
 
 export async function fetchEntries() {
-  if (!GAS_URL) return []
-  try {
-    const res = await fetch(GAS_URL)
-    return await res.json()
-  } catch {
-    return []
-  }
+  if (!supabase) return []
+  const { data, error } = await supabase.from('entries').select('*').order('id')
+  if (error) { console.error(error); return [] }
+  return data || []
 }
 
 export async function saveEntry(entry) {
-  if (!GAS_URL) return
-  const url = `${GAS_URL}?action=save&data=${encodeURIComponent(JSON.stringify(entry))}`
-  await fetch(url)
+  if (!supabase) return
+  const { error } = await supabase
+    .from('entries')
+    .upsert({ name: entry.name, foods: entry.foods, drinks: entry.drinks }, { onConflict: 'name' })
+  if (error) console.error(error)
 }
 
 export async function deleteEntry(name) {
-  if (!GAS_URL) return
-  const url = `${GAS_URL}?action=delete&name=${encodeURIComponent(name)}`
-  await fetch(url)
+  if (!supabase) return
+  const { error } = await supabase.from('entries').delete().eq('name', name)
+  if (error) console.error(error)
 }
