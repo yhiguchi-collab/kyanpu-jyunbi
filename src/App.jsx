@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import EntryForm from './components/EntryForm'
 import SummaryView from './components/SummaryView'
 import ShoppingList from './components/ShoppingList'
-import { fetchEntries, saveEntry, deleteEntry, isConfigured } from './utils/api'
+import { isConfigured, fetchEntries, saveEntry as saveToGAS, deleteEntry as deleteFromGAS } from './utils/api'
+import { getEntries, saveEntry as saveToLocal, deleteEntry as deleteFromLocal } from './utils/storage'
 import './App.css'
 
 const TABS = [
@@ -13,16 +14,19 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('entry')
-  const [entries, setEntries] = useState([])
+  const [entries, setEntries] = useState(() => isConfigured ? [] : getEntries())
   const [editingEntry, setEditingEntry] = useState(null)
 
   const refresh = useCallback(() => {
-    fetchEntries().then(data => {
-      if (Array.isArray(data)) setEntries(data)
-    })
+    if (isConfigured) {
+      fetchEntries().then(data => { if (Array.isArray(data)) setEntries(data) })
+    } else {
+      setEntries(getEntries())
+    }
   }, [])
 
   useEffect(() => {
+    if (!isConfigured) return
     refresh()
     const id = setInterval(refresh, 10000)
     return () => clearInterval(id)
@@ -30,16 +34,26 @@ export default function App() {
 
   const handleSave = async (entry) => {
     const wasEditing = !!editingEntry
-    await saveEntry(entry)
-    setTimeout(refresh, 1500)
+    if (isConfigured) {
+      await saveToGAS(entry)
+      setTimeout(refresh, 1500)
+    } else {
+      saveToLocal(entry)
+      setEntries(getEntries())
+    }
     setEditingEntry(null)
     if (wasEditing) setTab('summary')
   }
 
   const handleDelete = async (name) => {
     if (!window.confirm(`「${name}」の回答を削除しますか？`)) return
-    await deleteEntry(name)
-    setTimeout(refresh, 1500)
+    if (isConfigured) {
+      await deleteFromGAS(name)
+      setTimeout(refresh, 1500)
+    } else {
+      deleteFromLocal(name)
+      setEntries(getEntries())
+    }
   }
 
   const handleEdit = (entry) => {
@@ -47,28 +61,11 @@ export default function App() {
     setTab('entry')
   }
 
-  const handleCancelEdit = () => {
-    setEditingEntry(null)
-  }
+  const handleCancelEdit = () => setEditingEntry(null)
 
   const handleTabChange = (id) => {
     setTab(id)
     if (id !== 'entry') setEditingEntry(null)
-  }
-
-  if (!isConfigured) {
-    return (
-      <div className="app">
-        <header className="app-header">
-          <h1>キャンプ準備</h1>
-          <p>2026年6月6日 7名</p>
-        </header>
-        <div className="setup-msg">
-          <p className="setup-title">GAS の設定が必要です</p>
-          <p>CLAUDE.md の「GAS セットアップ」手順を確認してください。</p>
-        </div>
-      </div>
-    )
   }
 
   return (
