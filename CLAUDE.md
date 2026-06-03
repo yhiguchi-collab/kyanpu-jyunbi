@@ -5,7 +5,8 @@
 ## 技術スタック
 
 - React 18 + Vite
-- Firebase Realtime Database（複数デバイスからのリアルタイム共有）
+- Google Apps Script（データ保存・取得 API）
+- Google スプレッドシート（データベース）
 - Chart.js（円グラフ）
 - GitHub Pages（ホスティング）
 
@@ -13,56 +14,52 @@
 
 ```
 kyanpu-jyunbi/
-├── index.html
+├── gas/
+│   └── Code.gs               # GAS スクリプト（Google Apps Script にコピーして使う）
 ├── src/
-│   ├── App.jsx               # ルートコンポーネント（状態管理）
+│   ├── App.jsx               # ルートコンポーネント（状態管理・ポーリング）
 │   ├── components/
 │   │   ├── EntryForm.jsx     # 入力フォーム
 │   │   ├── SummaryView.jsx   # 集計・円グラフ
 │   │   └── ShoppingList.jsx  # 買い物チェックリスト
 │   └── utils/
-│       ├── db.js             # Firebase Realtime Database 操作
+│       ├── api.js            # GAS API 呼び出し
 │       └── storage.js        # localStorage（チェック状態のみ）
-├── .env.local                # Firebase 設定（要作成・git管理外）
+├── .env.local                # GAS URL 設定（要作成・git管理外）
 └── .env.local.example        # 設定ファイルのテンプレート
 ```
 
-## Firebase セットアップ
+## GAS セットアップ
 
-アプリを複数デバイスで使うには Firebase の設定が必要です。
+アプリを複数デバイスで使うには GAS の設定が必要です（所要時間 約5分）。
 
-### 1. Firebase プロジェクト作成
+### 1. Google スプレッドシートを作成
 
-1. https://console.firebase.google.com にアクセス
-2. 「プロジェクトを作成」→ 任意の名前で作成
-3. Google アナリティクスは「無効」で問題なし
+1. Google ドライブで新しいスプレッドシートを作成
+2. シート名は何でも OK（GAS がシートを自動作成します）
 
-### 2. Realtime Database の有効化
+### 2. GAS スクリプトを作成
 
-1. 左メニュー「構築」→「Realtime Database」
-2. 「データベースを作成」
-3. ロケーションは「asia-southeast1（シンガポール）」を選択
-4. セキュリティルールは「テストモードで開始」→「有効にする」
+1. スプレッドシートのメニュー「拡張機能」→「Apps Script」を開く
+2. エディタに `gas/Code.gs` の内容をすべてコピー＆ペースト
+3. 上部の「プロジェクトを保存」(Ctrl+S) をクリック
 
-### 3. Web アプリの登録
+### 3. ウェブアプリとしてデプロイ
 
-1. 左上の歯車アイコン →「プロジェクトの設定」
-2. 「マイアプリ」→「</>」（Webアプリ）をクリック
-3. アプリのニックネームを入力して「アプリを登録」
-4. 表示される `firebaseConfig` の各値をコピー
+1. 右上の「デプロイ」→「新しいデプロイ」
+2. 種類は「ウェブアプリ」を選択
+3. 設定を以下の通りにする：
+   - **次のユーザーとして実行**：自分（your email）
+   - **アクセスできるユーザー**：**全員**
+4. 「デプロイ」をクリック → Google アカウントで承認
+5. 表示される「ウェブアプリの URL」をコピー
 
-### 4. 設定ファイルの作成
+### 4. .env.local を作成
 
-プロジェクトルートに `.env.local` ファイルを作成し、コピーした値を貼り付ける：
+プロジェクトフォルダに `.env.local` ファイルを作成：
 
 ```
-VITE_FIREBASE_API_KEY=AIza...
-VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
-VITE_FIREBASE_DATABASE_URL=https://your-project-id-default-rtdb.asia-southeast1.firebasedatabase.app
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=000000000000
-VITE_FIREBASE_APP_ID=1:000000000000:web:xxxxxxxxxxxxxxxx
+VITE_GAS_URL=https://script.google.com/macros/s/コピーしたID/exec
 ```
 
 ### 5. デプロイ
@@ -101,15 +98,9 @@ npm run deploy
    git push origin main
    ```
 
-### コミットメッセージ規約
-
-- 日本語で記述してよい
-- 変更の「何を」「なぜ」が伝わる内容にする
-- 例: `チェックリスト追加機能を実装`、`バグ修正: 集計が反映されない問題`
-
 ### 注意事項
 
-- `.env.local`（Firebase設定）は絶対にコミットしない（`.gitignore` で除外済み）
+- `.env.local`（GAS URL）は絶対にコミットしない（`.gitignore` で除外済み）
 - `node_modules/` や OS 生成ファイル（`desktop.ini` 等）はコミットしない
 
 ## 開発サーバー起動

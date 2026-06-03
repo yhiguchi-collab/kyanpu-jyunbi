@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import EntryForm from './components/EntryForm'
 import SummaryView from './components/SummaryView'
 import ShoppingList from './components/ShoppingList'
-import { subscribeEntries, saveEntry, isConfigured } from './utils/db'
+import { fetchEntries, saveEntry, isConfigured } from './utils/api'
 import './App.css'
 
 const TABS = [
@@ -15,13 +15,23 @@ export default function App() {
   const [tab, setTab] = useState('entry')
   const [entries, setEntries] = useState([])
 
-  useEffect(() => {
-    const unsubscribe = subscribeEntries(setEntries)
-    return () => unsubscribe()
+  const refresh = useCallback(() => {
+    fetchEntries().then(data => {
+      if (Array.isArray(data)) setEntries(data)
+    })
   }, [])
+
+  useEffect(() => {
+    if (!isConfigured) return
+    refresh()
+    const id = setInterval(refresh, 10000)
+    return () => clearInterval(id)
+  }, [refresh])
 
   const handleSave = async (entry) => {
     await saveEntry(entry)
+    // GAS の処理完了を待ってから再取得
+    setTimeout(refresh, 2000)
   }
 
   if (!isConfigured) {
@@ -32,8 +42,8 @@ export default function App() {
           <p>2026年6月6日 7名</p>
         </header>
         <div className="setup-msg">
-          <p className="setup-title">Firebase の設定が必要です</p>
-          <p>CLAUDE.md の「Firebase セットアップ」手順を確認してください。</p>
+          <p className="setup-title">GAS の設定が必要です</p>
+          <p>CLAUDE.md の「GAS セットアップ」手順を確認してください。</p>
         </div>
       </div>
     )
