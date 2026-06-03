@@ -23,7 +23,14 @@ export default function EntryForm({ onSave }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    onSave({ name: name.trim(), foods, drinks })
+    // 追加ボタンを押さずに送信した場合も入力中の値を含める
+    const finalFoods = foodInput.trim() && !foods.includes(foodInput.trim())
+      ? [...foods, foodInput.trim()]
+      : foods
+    const finalDrinks = drinkInput.trim() && !drinks.includes(drinkInput.trim())
+      ? [...drinks, drinkInput.trim()]
+      : drinks
+    onSave({ name: name.trim(), foods: finalFoods, drinks: finalDrinks })
     setSubmitted(true)
   }
 
