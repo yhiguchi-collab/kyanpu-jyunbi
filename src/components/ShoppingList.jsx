@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { getCheckedItems, saveCheckedItems } from '../utils/storage'
+import { CATEGORY_COLORS } from '../utils/categories'
+
+const itemName = (item) => typeof item === 'object' ? item.name : item
+const itemCategory = (item) => typeof item === 'object' ? item.category : null
 
 function ItemSection({ title, items, checked, onToggle }) {
   return (
@@ -9,18 +13,23 @@ function ItemSection({ title, items, checked, onToggle }) {
         <p className="no-data">まだデータがありません</p>
       ) : (
         <ul>
-          {items.map(item => (
-            <li key={item} className={checked[item] ? 'done' : ''}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={!!checked[item]}
-                  onChange={() => onToggle(item)}
-                />
-                {item}
-              </label>
-            </li>
-          ))}
+          {items.map((item, i) => {
+            const name = itemName(item)
+            const color = CATEGORY_COLORS[itemCategory(item)] ?? '#aaa'
+            return (
+              <li key={i} className={checked[name] ? 'done' : ''}>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={!!checked[name]}
+                    onChange={() => onToggle(name)}
+                  />
+                  <span className="tag-dot" style={{ background: color }} />
+                  {name}
+                </label>
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
@@ -30,11 +39,24 @@ function ItemSection({ title, items, checked, onToggle }) {
 export default function ShoppingList({ entries }) {
   const [checked, setChecked] = useState(() => getCheckedItems())
 
-  const allFoods = [...new Set(entries.flatMap(e => e.foods || []))]
-  const allDrinks = [...new Set(entries.flatMap(e => e.drinks || []))]
+  // 同名アイテムは重複除去
+  const seen = new Set()
+  const allFoods = entries.flatMap(e => e.foods || []).filter(item => {
+    const name = itemName(item)
+    if (seen.has(name)) return false
+    seen.add(name)
+    return true
+  })
+  const seen2 = new Set()
+  const allDrinks = entries.flatMap(e => e.drinks || []).filter(item => {
+    const name = itemName(item)
+    if (seen2.has(name)) return false
+    seen2.add(name)
+    return true
+  })
 
-  const toggle = (item) => {
-    const next = { ...checked, [item]: !checked[item] }
+  const toggle = (name) => {
+    const next = { ...checked, [name]: !checked[name] }
     setChecked(next)
     saveCheckedItems(next)
   }

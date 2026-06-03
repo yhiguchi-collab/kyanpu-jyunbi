@@ -1,27 +1,28 @@
 import { Pie } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
+import { CATEGORY_COLORS } from '../utils/categories'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-const PIE_COLORS = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
-  '#FFEAA7', '#C39BD3', '#85C1E9', '#F0B27A',
-]
-
-function aggregateCounts(entries, key) {
-  const counts = {}
+// { category: { count, items: { name: count } } }
+function aggregateByCategory(entries, key) {
+  const result = {}
   entries.forEach(entry => {
     (entry[key] || []).forEach(item => {
-      counts[item] = (counts[item] || 0) + 1
+      const category = typeof item === 'object' ? (item.category || 'その他') : 'その他'
+      const name = typeof item === 'object' ? item.name : item
+      if (!result[category]) result[category] = { count: 0, items: {} }
+      result[category].count++
+      result[category].items[name] = (result[category].items[name] || 0) + 1
     })
   })
-  return counts
+  return result
 }
 
-function PieChart({ title, counts }) {
-  const entries = Object.entries(counts)
+function PieChart({ title, categoryData }) {
+  const categories = Object.keys(categoryData)
 
-  if (entries.length === 0) {
+  if (categories.length === 0) {
     return (
       <div className="chart-card">
         <h3>{title}</h3>
@@ -30,13 +31,14 @@ function PieChart({ title, counts }) {
     )
   }
 
-  const total = entries.reduce((sum, [, v]) => sum + v, 0)
+  const total = categories.reduce((sum, cat) => sum + categoryData[cat].count, 0)
+  const colors = categories.map(cat => CATEGORY_COLORS[cat] ?? '#CCCCCC')
 
   const data = {
-    labels: entries.map(([label]) => label),
+    labels: categories,
     datasets: [{
-      data: entries.map(([, v]) => v),
-      backgroundColor: PIE_COLORS.slice(0, entries.length),
+      data: categories.map(cat => categoryData[cat].count),
+      backgroundColor: colors,
       borderWidth: 2,
       borderColor: '#fff',
     }],
@@ -65,8 +67,15 @@ function PieChart({ title, counts }) {
       tooltip: {
         callbacks: {
           label: (ctx) => {
+            const cat = ctx.label
             const pct = Math.round(ctx.raw / total * 100)
-            return ` ${ctx.label}：${ctx.raw}人 (${pct}%)`
+            return ` ${cat}：${ctx.raw}人 (${pct}%)`
+          },
+          afterLabel: (ctx) => {
+            const cat = ctx.label
+            const items = categoryData[cat]?.items ?? {}
+            return Object.entries(items)
+              .map(([name, count]) => `  ・${name} ×${count}`)
           },
         },
       },
@@ -83,9 +92,13 @@ function PieChart({ title, counts }) {
   )
 }
 
+function itemName(item) {
+  return typeof item === 'object' ? item.name : item
+}
+
 export default function SummaryView({ entries, onDelete, onEdit }) {
-  const foodCounts = aggregateCounts(entries, 'foods')
-  const drinkCounts = aggregateCounts(entries, 'drinks')
+  const foodData = aggregateByCategory(entries, 'foods')
+  const drinkData = aggregateByCategory(entries, 'drinks')
 
   return (
     <div className="summary">
@@ -93,8 +106,8 @@ export default function SummaryView({ entries, onDelete, onEdit }) {
         <p>{entries.length} / 7名 回答済み</p>
       </div>
 
-      <PieChart title="食べたいもの" counts={foodCounts} />
-      <PieChart title="飲みたいもの" counts={drinkCounts} />
+      <PieChart title="食べたいもの" categoryData={foodData} />
+      <PieChart title="飲みたいもの" categoryData={drinkData} />
 
       {entries.length > 0 && (
         <div className="entries-table">
@@ -110,10 +123,10 @@ export default function SummaryView({ entries, onDelete, onEdit }) {
             </thead>
             <tbody>
               {entries.map(e => (
-                <tr key={e.id}>
+                <tr key={e.id ?? e.name}>
                   <td>{e.name}</td>
-                  <td>{(e.foods || []).join('、')}</td>
-                  <td>{(e.drinks || []).join('、')}</td>
+                  <td>{(e.foods || []).map(itemName).join('、')}</td>
+                  <td>{(e.drinks || []).map(itemName).join('、')}</td>
                   <td className="action-cell">
                     <button className="btn-edit" onClick={() => onEdit(e)}>編集</button>
                     <button className="btn-delete" onClick={() => onDelete(e.name)}>削除</button>
