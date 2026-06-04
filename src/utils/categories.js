@@ -36,6 +36,5 @@ export function classifyDrink(name) {
 export function classifyFood(name) {
   if (SEAFOOD.some(kw => name.includes(kw))) return '海鮮'
   if (MEAT.some(kw => name.includes(kw))) return 'お肉'
-  if (VEGGIE.some(kw => name.includes(kw))) return '野菜'
-  return 'その他'
+  return '野菜'
 }
