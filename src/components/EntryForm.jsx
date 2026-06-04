@@ -87,7 +87,7 @@ export default function EntryForm({ onSave, initialEntry = null, onCancel = null
             value={foodInput}
             onChange={e => setFoodInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFood() } }}
-            placeholder="例: 焼き肉、とうもろこし、エビ"
+            placeholder="例: カルビ、とうもろこし、エビ"
           />
           <button type="button" className="btn-add" onClick={addFood}>追加</button>
         </div>
