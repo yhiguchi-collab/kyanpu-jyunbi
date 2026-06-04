@@ -1,54 +1,30 @@
 import { useState } from 'react'
-import { FOOD_CATEGORIES, DRINK_CATEGORIES, CATEGORY_COLORS } from '../utils/categories'
-
-function CategoryButtons({ categories, selected, onSelect }) {
-  return (
-    <div className="category-buttons">
-      {categories.map(cat => (
-        <button
-          key={cat}
-          type="button"
-          className={`btn-category ${selected === cat ? 'selected' : ''}`}
-          style={selected === cat ? {
-            borderColor: CATEGORY_COLORS[cat],
-            background: CATEGORY_COLORS[cat] + '22',
-            color: CATEGORY_COLORS[cat],
-          } : {}}
-          onClick={() => onSelect(cat)}
-        >
-          {cat}
-        </button>
-      ))}
-    </div>
-  )
-}
+import { CATEGORY_COLORS, classifyFood, classifyDrink } from '../utils/categories'
 
 export default function EntryForm({ onSave, initialEntry = null, onCancel = null }) {
+  const toName = item => typeof item === 'object' ? item.name : item
+
   const [name, setName] = useState(initialEntry?.name ?? '')
   const [foodInput, setFoodInput] = useState('')
-  const [foodCategory, setFoodCategory] = useState(FOOD_CATEGORIES[0])
-  const [foods, setFoods] = useState(initialEntry?.foods ?? [])
+  const [foods, setFoods] = useState((initialEntry?.foods ?? []).map(toName))
   const [drinkInput, setDrinkInput] = useState('')
-  const [drinkCategory, setDrinkCategory] = useState(DRINK_CATEGORIES[0])
-  const [drinks, setDrinks] = useState(initialEntry?.drinks ?? [])
+  const [drinks, setDrinks] = useState((initialEntry?.drinks ?? []).map(toName))
   const [submitted, setSubmitted] = useState(false)
 
   const isEditing = !!initialEntry
 
   const addFood = () => {
     const val = foodInput.trim()
-    if (!val) return
-    if (!foods.find(f => f.name === val && f.category === foodCategory)) {
-      setFoods([...foods, { name: val, category: foodCategory }])
+    if (val && !foods.includes(val)) {
+      setFoods([...foods, val])
       setFoodInput('')
     }
   }
 
   const addDrink = () => {
     const val = drinkInput.trim()
-    if (!val) return
-    if (!drinks.find(d => d.name === val && d.category === drinkCategory)) {
-      setDrinks([...drinks, { name: val, category: drinkCategory }])
+    if (val && !drinks.includes(val)) {
+      setDrinks([...drinks, val])
       setDrinkInput('')
     }
   }
@@ -56,12 +32,10 @@ export default function EntryForm({ onSave, initialEntry = null, onCancel = null
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    const finalFoods = foodInput.trim()
-      ? [...foods, { name: foodInput.trim(), category: foodCategory }]
-      : foods
-    const finalDrinks = drinkInput.trim()
-      ? [...drinks, { name: drinkInput.trim(), category: drinkCategory }]
-      : drinks
+    const finalFoods = foodInput.trim() && !foods.includes(foodInput.trim())
+      ? [...foods, foodInput.trim()] : foods
+    const finalDrinks = drinkInput.trim() && !drinks.includes(drinkInput.trim())
+      ? [...drinks, drinkInput.trim()] : drinks
     onSave({ name: name.trim(), foods: finalFoods, drinks: finalDrinks })
     if (!isEditing) setSubmitted(true)
   }
@@ -106,26 +80,21 @@ export default function EntryForm({ onSave, initialEntry = null, onCancel = null
 
       <div className="form-field">
         <label>食べたいもの</label>
-        <CategoryButtons
-          categories={FOOD_CATEGORIES}
-          selected={foodCategory}
-          onSelect={setFoodCategory}
-        />
         <div className="input-add-row">
           <input
             type="text"
             value={foodInput}
             onChange={e => setFoodInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addFood() } }}
-            placeholder="例: 焼き肉、とうもろこし"
+            placeholder="例: 焼き肉、とうもろこし、エビ"
           />
           <button type="button" className="btn-add" onClick={addFood}>追加</button>
         </div>
         <ul className="tag-list">
           {foods.map((f, i) => (
             <li key={i} className="tag-item">
-              <span className="tag-dot" style={{ background: CATEGORY_COLORS[f.category] ?? '#ccc' }} />
-              {f.name}
+              <span className="tag-dot" style={{ background: CATEGORY_COLORS[classifyFood(f)] }} />
+              {f}
               <button type="button" onClick={() => setFoods(foods.filter((_, j) => j !== i))}>×</button>
             </li>
           ))}
@@ -134,26 +103,21 @@ export default function EntryForm({ onSave, initialEntry = null, onCancel = null
 
       <div className="form-field">
         <label>飲みたいもの</label>
-        <CategoryButtons
-          categories={DRINK_CATEGORIES}
-          selected={drinkCategory}
-          onSelect={setDrinkCategory}
-        />
         <div className="input-add-row">
           <input
             type="text"
             value={drinkInput}
             onChange={e => setDrinkInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addDrink() } }}
-            placeholder="例: ビール、コーラ"
+            placeholder="例: ビール、コーラ、お茶"
           />
           <button type="button" className="btn-add" onClick={addDrink}>追加</button>
         </div>
         <ul className="tag-list">
           {drinks.map((d, i) => (
             <li key={i} className="tag-item">
-              <span className="tag-dot" style={{ background: CATEGORY_COLORS[d.category] ?? '#ccc' }} />
-              {d.name}
+              <span className="tag-dot" style={{ background: CATEGORY_COLORS[classifyDrink(d)] }} />
+              {d}
               <button type="button" onClick={() => setDrinks(drinks.filter((_, j) => j !== i))}>×</button>
             </li>
           ))}

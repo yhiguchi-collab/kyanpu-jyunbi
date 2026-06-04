@@ -1,16 +1,18 @@
 import { Pie } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
-import { CATEGORY_COLORS } from '../utils/categories'
+import { CATEGORY_COLORS, classifyFood, classifyDrink } from '../utils/categories'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-// { category: { count, items: { name: count } } }
+const toName = item => typeof item === 'object' ? item.name : item
+
 function aggregateByCategory(entries, key) {
+  const classifyFn = key === 'foods' ? classifyFood : classifyDrink
   const result = {}
   entries.forEach(entry => {
-    (entry[key] || []).forEach(item => {
-      const category = typeof item === 'object' ? (item.category || 'その他') : 'その他'
-      const name = typeof item === 'object' ? item.name : item
+    (entry[key] || []).forEach(rawItem => {
+      const name = toName(rawItem)
+      const category = classifyFn(name)
       if (!result[category]) result[category] = { count: 0, items: {} }
       result[category].count++
       result[category].items[name] = (result[category].items[name] || 0) + 1
@@ -32,13 +34,12 @@ function PieChart({ title, categoryData }) {
   }
 
   const total = categories.reduce((sum, cat) => sum + categoryData[cat].count, 0)
-  const colors = categories.map(cat => CATEGORY_COLORS[cat] ?? '#CCCCCC')
 
   const data = {
     labels: categories,
     datasets: [{
       data: categories.map(cat => categoryData[cat].count),
-      backgroundColor: colors,
+      backgroundColor: categories.map(cat => CATEGORY_COLORS[cat] ?? '#CCCCCC'),
       borderWidth: 2,
       borderColor: '#fff',
     }],
@@ -67,15 +68,12 @@ function PieChart({ title, categoryData }) {
       tooltip: {
         callbacks: {
           label: (ctx) => {
-            const cat = ctx.label
             const pct = Math.round(ctx.raw / total * 100)
-            return ` ${cat}：${ctx.raw}人 (${pct}%)`
+            return ` ${ctx.label}：${ctx.raw}人 (${pct}%)`
           },
           afterLabel: (ctx) => {
-            const cat = ctx.label
-            const items = categoryData[cat]?.items ?? {}
-            return Object.entries(items)
-              .map(([name, count]) => `  ・${name} ×${count}`)
+            const items = categoryData[ctx.label]?.items ?? {}
+            return Object.entries(items).map(([name, count]) => `  ・${name} ×${count}`)
           },
         },
       },
@@ -90,10 +88,6 @@ function PieChart({ title, categoryData }) {
       </div>
     </div>
   )
-}
-
-function itemName(item) {
-  return typeof item === 'object' ? item.name : item
 }
 
 export default function SummaryView({ entries, onDelete, onEdit }) {
@@ -125,8 +119,8 @@ export default function SummaryView({ entries, onDelete, onEdit }) {
               {entries.map(e => (
                 <tr key={e.id ?? e.name}>
                   <td>{e.name}</td>
-                  <td>{(e.foods || []).map(itemName).join('、')}</td>
-                  <td>{(e.drinks || []).map(itemName).join('、')}</td>
+                  <td>{(e.foods || []).map(toName).join('、')}</td>
+                  <td>{(e.drinks || []).map(toName).join('、')}</td>
                   <td className="action-cell">
                     <button className="btn-edit" onClick={() => onEdit(e)}>編集</button>
                     <button className="btn-delete" onClick={() => onDelete(e.name)}>削除</button>
