@@ -13,29 +13,30 @@ export default function EntryForm({ onSave, initialEntry = null, onCancel = null
 
   const isEditing = !!initialEntry
 
+  const splitInput = (val) =>
+    val.split(/[,、\s]+/).map(s => s.trim()).filter(Boolean)
+
   const addFood = () => {
-    const val = foodInput.trim()
-    if (val && !foods.includes(val)) {
-      setFoods([...foods, val])
-      setFoodInput('')
-    }
+    const items = splitInput(foodInput)
+    if (items.length === 0) return
+    setFoods([...foods, ...items.filter(s => !foods.includes(s))])
+    setFoodInput('')
   }
 
   const addDrink = () => {
-    const val = drinkInput.trim()
-    if (val && !drinks.includes(val)) {
-      setDrinks([...drinks, val])
-      setDrinkInput('')
-    }
+    const items = splitInput(drinkInput)
+    if (items.length === 0) return
+    setDrinks([...drinks, ...items.filter(s => !drinks.includes(s))])
+    setDrinkInput('')
   }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    const finalFoods = foodInput.trim() && !foods.includes(foodInput.trim())
-      ? [...foods, foodInput.trim()] : foods
-    const finalDrinks = drinkInput.trim() && !drinks.includes(drinkInput.trim())
-      ? [...drinks, drinkInput.trim()] : drinks
+    const pendingFoods = splitInput(foodInput).filter(s => !foods.includes(s))
+    const finalFoods = [...foods, ...pendingFoods]
+    const pendingDrinks = splitInput(drinkInput).filter(s => !drinks.includes(s))
+    const finalDrinks = [...drinks, ...pendingDrinks]
     onSave({ name: name.trim(), foods: finalFoods, drinks: finalDrinks })
     if (!isEditing) setSubmitted(true)
   }
