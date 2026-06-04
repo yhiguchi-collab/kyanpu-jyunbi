@@ -27,6 +27,11 @@ const VEGGIE = ['とうもろこし', 'ピーマン', 'キャベツ', '玉ねぎ
 const SEAFOOD = ['エビ', 'ホタテ', 'イカ', 'タコ', 'サーモン', '鮭', 'マグロ', 'シーフード',
   'カニ', 'アサリ', 'ハマグリ', '牡蠣', 'ウニ', 'イクラ', '魚', '海鮮', 'さんま', 'さば']
 
+const OTHER_FOOD = ['マシュマロ', 'チョコ', 'アイス', 'スイーツ', 'デザート', 'ケーキ',
+  'プリン', 'ゼリー', 'キャンディ', 'グミ', 'クッキー', 'おにぎり', 'パン', 'ご飯',
+  'ラーメン', 'うどん', 'そば', 'チーズ', '卵', 'たまご', 'スナック', 'ポテチ',
+  'カップ麺', 'ちくわ', 'かまぼこ']
+
 export function classifyDrink(name) {
   if (ALCOHOL.some(kw => name.includes(kw))) return 'アルコール'
   if (NON_ALCOHOL.some(kw => name.includes(kw))) return 'ノンアルコール'
@@ -36,5 +41,6 @@ export function classifyDrink(name) {
 export function classifyFood(name) {
   if (SEAFOOD.some(kw => name.includes(kw))) return '海鮮'
   if (MEAT.some(kw => name.includes(kw))) return 'お肉'
+  if (OTHER_FOOD.some(kw => name.includes(kw))) return 'その他'
   return '野菜'
 }
